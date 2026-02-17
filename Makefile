@@ -4,11 +4,11 @@ AR=ar
 ARFLAGS=-cvrs
 
 LIB=libmythreads.a
-LIBSRC=threadmanagement.c lockmanagement.c mythreads.h
+LIBSRC=threadmanagement.c lockmanagement.c
 LIBOBJ=$(LIBSRC:.c=.o)
 
 DIST=project2.tgz
-FILES=Makefile README $(LIBSRC)
+FILES=Makefile README $(LIBSRC) mythreads.h
 
 
 all: $(LIB)
