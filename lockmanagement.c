@@ -9,9 +9,11 @@ struct mutexlock {
 typedef struct mutexlock mutexlock_t;
 
 mutexlock_t * lockCreate(void) {
-    return NULL;
+    mutexlock_t *lock = malloc(sizeof(mutexlock_t));
+    return lock;
 }
 void lockDestroy(mutexlock_t * lock) {
+    free(lock);
     return;
 }
 void threadLock(mutexlock_t *lock) {

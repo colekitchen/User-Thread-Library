@@ -4,7 +4,7 @@ AR=ar
 ARFLAGS=-cvrs
 
 LIB=libmythreads.a
-LIBSRC=threadmanagement.c lockmanagement.c
+LIBSRC=threadmanagement.c
 LIBOBJ=$(LIBSRC:.c=.o)
 
 DIST=project2.tgz

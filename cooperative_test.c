@@ -4,13 +4,14 @@
 #include "mythreads.h"
 
 
+
 void *t1 (void *arg)
 {
 
-	//threadYield();
 	int param = *((int*)arg);
 	printf("t1 started %d\n",param);
 
+	//threadExit(ptr);
 	threadYield();
 
 	int* result = malloc(sizeof(int));
@@ -35,6 +36,7 @@ int main(void)
 	p2 = 2;
 
 	int *result1, *result2;
+	int *exit = (int *) 1;
 
 	//initialize the threading library. DON'T call this more than once!!!
 	threadInit();
@@ -44,10 +46,11 @@ int main(void)
 	printf("created thread 1.\n");	
 	
 	id2 = threadCreate(t1,(void*)&p2);
+	//printf("%d\n", id2);
 	printf("created thread 2.\n");
 
 	
-
+	//threadExit(exit);
 	threadJoin(id1, (void*)&result1);
 	printf("joined #1 --> %d.\n",*result1);
 
