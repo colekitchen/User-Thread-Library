@@ -37,12 +37,10 @@ struct Thread *threads;
 int current_thread, recent_thread, old_thread, new_thread, numOfThreads, interruptsAreDisabled;
 
 __attribute__ ((destructor)) void cleanup(void) {
-    free(returnValues);
     for (int i = 0; i < numOfThreads; i++) {
-        if (threads[i].stack != NULL) {
-            free(threads[i].stack);
-        }
+        free(returnValues[i]);
     }
+    free(returnValues);
     free(threads);
 }
 
@@ -57,15 +55,15 @@ static void interruptEnable () {
 }
 
 void threadManager(thFuncPtr funcPtr, void *argPtr) {
-
     void *returnValue = funcPtr(argPtr);
+    interruptDisable();
     returnValues = realloc(returnValues, (numOfThreads) * sizeof(void *));
 
     returnValues[current_thread] = returnValue;
 
     threads[current_thread].status = 1;
 
-    interruptDisable();
+
     for (int i = 0; i < numOfThreads; i++) {
         if (threads[i].join == current_thread) {
             interruptEnable();
@@ -78,6 +76,7 @@ void threadManager(thFuncPtr funcPtr, void *argPtr) {
 }
 
 void threadInit(void) {
+    interruptDisable();
     threads = malloc(1 * sizeof(struct Thread));
     if (getcontext(&threads[0].thread) == -1) {
         perror("Failed to get context");
@@ -90,6 +89,7 @@ void threadInit(void) {
     new_thread = 0;
     recent_thread = 0; // Index of thread that called yield
     current_thread = 0; // Index of our working thread
+    interruptEnable();
     return;
 }
 
@@ -115,7 +115,6 @@ int threadCreate(thFuncPtr funcPtr, void *argPtr) {
     makecontext(&threads[current_thread].thread, (void (*)(void))threadManager, 2, funcPtr, argPtr);
 
     interruptEnable();
-
     swapcontext(&threads[old_thread].thread, &threads[current_thread].thread);
 
     return new_thread;
@@ -170,6 +169,8 @@ void threadJoin(int thread_id, void **result) {
             return;
     }
     else {
+        free(threads[thread_id].stack);
+        threads[thread_id].stack = NULL;
         interruptEnable();
         return;
     }
@@ -258,13 +259,14 @@ void threadWait(mutexlock_t* lock, condvar_t *cv) {
     }
 
     threadLock(lock);
+    threads[current_thread].cv = NULL;
     interruptEnable();
     return;
 }
 void threadSignal(mutexlock_t* lock, condvar_t *cv) {
     interruptDisable();
     for (int i = 0; i < numOfThreads; i++) {
-        if (threads[i].lock == lock && threads[i].cv == cv) {
+        if (threads[i].lock == lock && threads[i].cv == cv && threads[i].signaled == 0) {
             threads[i].signaled = 1;
             interruptEnable();
             swapcontext(&threads[current_thread].thread, &threads[i].thread);
