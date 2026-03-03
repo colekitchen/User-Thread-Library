@@ -20,6 +20,9 @@ $(LIB): $(LIBOBJ)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+test: cooperative_test.c libmythreads.a
+	$(CC) -o test cooperative_test.c libmythreads.a
+
 tar: $(FILES)
 	tar cvzf $(DIST) $(FILES)
 

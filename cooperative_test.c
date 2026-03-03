@@ -7,6 +7,7 @@
 
 void *t1 (void *arg)
 {
+	int *ptr = (int *) 1;
 
 	int param = *((int*)arg);
 	printf("t1 started %d\n",param);
@@ -18,6 +19,7 @@ void *t1 (void *arg)
 	*result = param + 1;
 	printf ("added 1! (%d)\n",*result);
 	
+	//threadExit(ptr);
 	threadYield();
 
 	printf("t1: done result=%d\n",*result);
@@ -32,7 +34,7 @@ int main(void)
 	int p1;
 	int p2;
 
-	p1 = 23;
+	p1 = 16;
 	p2 = 2;
 
 	int *result1, *result2;
