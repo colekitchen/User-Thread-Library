@@ -7,7 +7,7 @@
 #include <signal.h>
 
 #define BIG 100000
-#define TIMER_INTERVAL_US 100
+#define TIMER_INTERVAL_US 120
 
 //#define USE_VIRTUAL_TIMER
 
