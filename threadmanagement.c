@@ -19,7 +19,7 @@ struct condvar {
 typedef struct condvar condvar_t;
 
 struct Thread {
-    ucontext_t thread;
+    ucontext_t *thread;
     mutexlock_t *lock;
     condvar_t *cv;
     void *stack;
@@ -58,7 +58,7 @@ void threadManager(thFuncPtr funcPtr, void *argPtr) {
 
     for (int i = 0; i < numOfThreads; i++) {
         if (threads[i].join == current_thread) {
-            swapcontext(&threads[current_thread].thread, &threads[i].thread);
+            swapcontext(threads[current_thread].thread, threads[i].thread);
             //break;
             //interruptEnable();
         }
@@ -71,7 +71,8 @@ void threadManager(thFuncPtr funcPtr, void *argPtr) {
 void threadInit(void) {
     //interruptDisable();
     threads = malloc(1 * sizeof(struct Thread));
-    if (getcontext(&threads[0].thread) == -1) {
+    threads[0].thread = malloc(sizeof(ucontext_t));
+    if (getcontext(threads[0].thread) == -1) {
         perror("Failed to get context");
     }
     threads[0].status = 0;
@@ -93,25 +94,26 @@ int threadCreate(thFuncPtr funcPtr, void *argPtr) {
     new_thread = current_thread;
     numOfThreads+=1;
     threads = realloc(threads, (numOfThreads) * sizeof(struct Thread));
+    threads[current_thread].thread = malloc(sizeof(ucontext_t));
     returnValues = realloc(returnValues, (numOfThreads) * sizeof(void *));
     returnValues[current_thread] = NULL;
     threads[current_thread].id = current_thread;
     threads[current_thread].join = -1;
-    threads[current_thread].join = -1;
+    //threads[current_thread].join = -1;
 
-    if (getcontext(&threads[current_thread].thread) == -1) {
+    if (getcontext(threads[current_thread].thread) == -1) {
         perror("Failed to get context");
     }
 
     threads[current_thread].status = 0;
-    threads[current_thread].stack = malloc(STACK_SIZE);
-    threads[current_thread].thread.uc_stack.ss_sp = threads[current_thread].stack;
-	threads[current_thread].thread.uc_stack.ss_size = STACK_SIZE;
+    //threads[current_thread].stack = malloc(STACK_SIZE);
+    threads[current_thread].thread->uc_stack.ss_sp = malloc(STACK_SIZE);;
+	threads[current_thread].thread->uc_stack.ss_size = STACK_SIZE;
 
-    makecontext(&threads[current_thread].thread, (void (*)(void))threadManager, 2, funcPtr, argPtr);
+    makecontext(threads[current_thread].thread, (void (*)(void))threadManager, 2, funcPtr, argPtr);
 
     //interruptEnable();
-    swapcontext(&threads[old_thread].thread, &threads[current_thread].thread);
+    swapcontext(threads[old_thread].thread, threads[current_thread].thread);
     //interruptEnable();
 
     return new_thread;
@@ -137,7 +139,7 @@ void threadYield(void) {
     }
 
     if (current_thread != recent_thread) {
-        swapcontext(&threads[recent_thread].thread, &threads[current_thread].thread);
+        swapcontext(threads[recent_thread].thread, threads[current_thread].thread);
     }
 
     //interruptEnable();
@@ -158,14 +160,16 @@ void threadJoin(int thread_id, void **result) {
     }
     if (returnValues[thread_id] != NULL) {
             *result = returnValues[thread_id];
-            free(threads[thread_id].stack);
-            threads[thread_id].stack = NULL;
+            free(threads[thread_id].thread->uc_stack.ss_sp);
+            free(threads[thread_id].thread);
+            //threads[thread_id].stack = NULL;
             //interruptEnable();
             return;
     }
     else {
-        free(threads[thread_id].stack);
-        threads[thread_id].stack = NULL;
+        free(threads[thread_id].thread->uc_stack.ss_sp);
+        free(threads[thread_id].thread);
+        //threads[thread_id].stack = NULL;
         //interruptEnable();
         return;
     }
@@ -282,7 +286,7 @@ void threadSignal(mutexlock_t* lock, condvar_t *cv) {
             }
             threads[min].signaled = 1;
             //interruptEnable();
-            swapcontext(&threads[current_thread].thread, &threads[min].thread);
+            swapcontext(threads[current_thread].thread, threads[min].thread);
         }
     }
     //interruptEnable();

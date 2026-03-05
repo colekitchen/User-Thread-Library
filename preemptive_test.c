@@ -116,6 +116,7 @@ int main(void)
 
 	threadJoin(id2, (void*)&result2);
 	printf("joined #%d --> %d (%p).\n",id2,*result2,result2);
+	threadExit();
 
 }
 
