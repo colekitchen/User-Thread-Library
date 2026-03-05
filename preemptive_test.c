@@ -7,7 +7,7 @@
 #include <signal.h>
 
 #define BIG 100000
-#define TIMER_INTERVAL_US 120
+#define TIMER_INTERVAL_US 100
 
 //#define USE_VIRTUAL_TIMER
 
@@ -65,7 +65,9 @@ void *t1 (void *arg)
 	int param = *((int*)arg);
 	printf("t1 started %d\n",param);
 
+	interruptsAreDisabled = 1;
 	int* result = malloc(sizeof(int));
+	interruptsAreDisabled = 0;
 	
 	*result = param;
 	for (int i=0; i < (param * BIG); i++)
@@ -116,7 +118,6 @@ int main(void)
 
 	threadJoin(id2, (void*)&result2);
 	printf("joined #%d --> %d (%p).\n",id2,*result2,result2);
-	threadExit();
 
 }
 
