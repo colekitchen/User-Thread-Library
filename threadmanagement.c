@@ -148,6 +148,7 @@ void threadYield(void) {
     for (int i = 0; i < numOfThreads; i++) {
         if (threads[recent_thread].status == 1 && threads[i].join == recent_thread) {
             current_thread = i;
+            break;
         }
     }
 
