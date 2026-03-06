@@ -28,6 +28,9 @@ testp: preemptive_test.c libmythreads.a
 
 testl: lock_test.c libmythreads.a
 	$(CC) -o testl lock_test.c libmythreads.a 
+
+testm: mem_test.c libmythreads.a
+	$(CC) -o testm mem_test.c libmythreads.a
 	
 tar: $(FILES)
 	tar cvzf $(DIST) $(FILES)

@@ -57,13 +57,20 @@ void threadManager(thFuncPtr funcPtr, void *argPtr) {
     threads[current_thread].status = 1;
 
 
-    for (int i = 0; i < numOfThreads; i++) {
+    /*for (int i = 0; i < numOfThreads; i++) {
         if (threads[i].join == current_thread) {
             swapcontext(threads[current_thread].thread, threads[i].thread);
             //break;
             //interruptEnable();
         }
-    }
+    }*/
+
+    /*for (int i = 0; i < numOfThreads; i++) {
+        if (threads[i].status == 1 && i != current_thread) {
+            free(threads[i].thread->uc_stack.ss_sp);
+            threads[i].thread->uc_stack.ss_sp = NULL;
+        }
+    }*/
     interruptEnable();
 
     threadYield();
@@ -138,6 +145,13 @@ void threadYield(void) {
         i++;
     }
 
+    for (int i = 0; i < numOfThreads; i++) {
+        if (threads[recent_thread].status == 1 && threads[i].join == recent_thread) {
+            current_thread = i;
+        }
+    }
+
+    //printf("Going to thread %d\n", current_thread);
     if (current_thread != recent_thread) {
         swapcontext(threads[recent_thread].thread, threads[current_thread].thread);
     }
@@ -158,11 +172,14 @@ void threadJoin(int thread_id, void **result) {
         threadYield();
         interruptDisable();
     }
+    
+    threads[current_thread].join = -1;
+
     if (returnValues[thread_id] != NULL) {
             *result = returnValues[thread_id];
             free(threads[thread_id].thread->uc_stack.ss_sp);
             //free(returnValues[thread_id]);
-            threads[thread_id].thread->uc_stack.ss_sp = NULL;
+            //threads[thread_id].thread->uc_stack.ss_sp = NULL;
             //free(threads[thread_id].thread);
             //threads[thread_id].thread = NULL;
             //threads[thread_id].stack = NULL;
@@ -172,7 +189,7 @@ void threadJoin(int thread_id, void **result) {
     else {
         free(threads[thread_id].thread->uc_stack.ss_sp);
         //free(returnValues[thread_id]);
-        threads[thread_id].thread->uc_stack.ss_sp = NULL;
+        //threads[thread_id].thread->uc_stack.ss_sp = NULL;
         //free(threads[thread_id].thread);
         //threads[thread_id].thread = NULL;
         //threads[thread_id].stack = NULL;
@@ -275,7 +292,9 @@ void threadWait(mutexlock_t* lock, condvar_t *cv) {
         interruptDisable();
     }
 
+    interruptEnable();
     threadLock(lock);
+    interruptDisable();
     threads[current_thread].cv = NULL;
     threads[current_thread].order = -1;
     interruptEnable();
