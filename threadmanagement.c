@@ -85,6 +85,7 @@ void threadInit(void) {
     }
     threads[0].status = 0;
     threads[0].id = 0;
+    threads[0].join = -1;
     returnValues = calloc(1, sizeof(void *));
     numOfThreads = 1; // Number of threads
     old_thread = 0;
@@ -145,11 +146,15 @@ void threadYield(void) {
         i++;
     }
 
-    for (int i = 0; i < numOfThreads; i++) {
+    /*for (int i = 0; i < numOfThreads; i++) {
         if (threads[recent_thread].status == 1 && threads[i].join == recent_thread) {
             current_thread = i;
             break;
         }
+    }*/
+
+    if (threads[recent_thread].join != -1 && threads[recent_thread].status == 1) {
+        current_thread = threads[recent_thread].join;
     }
 
     //printf("Going to thread %d\n", current_thread);
@@ -167,33 +172,26 @@ void threadJoin(int thread_id, void **result) {
         interruptEnable();
         return;
     }
-    threads[current_thread].join = thread_id;
+
+    //threads[current_thread].join = thread_id;
+    threads[thread_id].join = current_thread;
     while (threads[thread_id].status != 1) {
         interruptEnable();
         threadYield();
         interruptDisable();
     }
     
-    threads[current_thread].join = -1;
+    //threads[current_thread].join = -1;
+    threads[thread_id].join = -1;
 
     if (returnValues[thread_id] != NULL) {
             *result = returnValues[thread_id];
             free(threads[thread_id].thread->uc_stack.ss_sp);
-            //free(returnValues[thread_id]);
-            //threads[thread_id].thread->uc_stack.ss_sp = NULL;
-            //free(threads[thread_id].thread);
-            //threads[thread_id].thread = NULL;
-            //threads[thread_id].stack = NULL;
             interruptEnable();
             return;
     }
     else {
         free(threads[thread_id].thread->uc_stack.ss_sp);
-        //free(returnValues[thread_id]);
-        //threads[thread_id].thread->uc_stack.ss_sp = NULL;
-        //free(threads[thread_id].thread);
-        //threads[thread_id].thread = NULL;
-        //threads[thread_id].stack = NULL;
         interruptEnable();
         return;
     }
@@ -280,7 +278,7 @@ void threadWait(mutexlock_t* lock, condvar_t *cv) {
     for (int i = 0; i < numOfThreads; i++) {
         if (threads[i].lock == lock && threads[i].cv == cv && threads[i].order != -1 && i != current_thread) {
             if (threads[i].order > max) {
-                max = i;
+                max = threads[i].order;
             }
         }
     }
@@ -304,14 +302,17 @@ void threadWait(mutexlock_t* lock, condvar_t *cv) {
 void threadSignal(mutexlock_t* lock, condvar_t *cv) {
     interruptDisable();
     int min = 1000000000;
+    int next = -1;
     for (int i = 0; i < numOfThreads; i++) {
         if (threads[i].lock == lock && threads[i].cv == cv && threads[i].signaled == 0) {
             if (threads[i].order > -1 && threads[i].order < min) {
-                min = i;
+                min = threads[i].order;
+                next = i;
             }
-            threads[min].signaled = 1;
-            //interruptEnable();
-            swapcontext(threads[current_thread].thread, threads[min].thread);
+            threads[next].signaled = 1;
+            interruptEnable();
+            threadYield();
+            interruptDisable();
         }
     }
     interruptEnable();
