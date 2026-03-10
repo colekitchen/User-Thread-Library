@@ -1,3 +1,21 @@
 Cole Kitchen
 
-Compilation submission.
+KNOWN PROBLEMS:
+My program passes all of the autograder tests, however I used integers to do my 
+CV queue, so if you called wait on more than 1 billion threads, it would not be able to signal
+any more than 1 billion. If I were to do the project again I would probably start with a linked list
+and actually create a data structure for the CV tracking.
+
+DESIGN:
+I decided to use an array for my implementation of the project because I thought it would be faster.
+I found out that it is actually not much faster than doing a linked list, and it also seems a bit cluttered
+because I do keep track of two indexes and the number of threads, as well as a bunch of little flags
+for multiple operations like join and the CVS and locks. I also thought it would save memory to not create
+an actual queue for each CV, so I decided to use integers to essentially make a queue. This has a limitation
+though because if you have 1 billion and 1 threads waiting, the last thread will never be able to be signaled.
+The lowest order number it checks for is 1 billion, so anything past that it just wont see. This could
+probably be fixed if you shifted all of the order numbers down by 1 when you take one off but it would 
+require an extra loop, but I have not tried it out so maybe it could fit in the current for loop.
+
+REFERENCES:
+Jacob Sorber's Operating Systems github repository
