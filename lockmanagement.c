@@ -9,7 +9,7 @@ struct mutexlock {
 typedef struct mutexlock mutexlock_t;
 
 mutexlock_t * lockCreate(void) {
-    mutexlock_t *lock = malloc(sizeof(mutexlock_t));
+    mutexlock_t *lock = malloc(sizeof(mutexlock_t) * 1);
     return lock;
 }
 void lockDestroy(mutexlock_t * lock) {
@@ -43,5 +43,4 @@ void threadSignal(mutexlock_t* lock, condvar_t *cv) {
     return;
 }
 
-//this 
 int interruptsAreDisabled;
