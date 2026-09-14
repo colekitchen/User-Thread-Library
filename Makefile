@@ -11,6 +11,7 @@ DIST=project2.tgz
 FILES=Makefile README $(LIBSRC) mythreads.h
 
 
+// All tests working
 all: $(LIB)
 
 $(LIB): $(LIBOBJ)
